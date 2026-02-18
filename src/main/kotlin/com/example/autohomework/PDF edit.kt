@@ -18,7 +18,7 @@ class GPTCilent(tokem: String)  {
     val agent = AIAgentService(
         promptExecutor = simpleOpenAIExecutor(tokem),
         systemPrompt = "You do the pdf that I gave you",
-        llmModel = OpenAIModels.Chat.GPT4oMini,
+        llmModel = OpenAIModels.Chat.GPT5Mini,
         toolRegistry = toolRegistry,
         maxIterations = 100
 
