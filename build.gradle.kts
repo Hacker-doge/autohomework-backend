@@ -35,6 +35,7 @@ dependencies {
     implementation("com.slack.api:bolt:1.38.0")
     implementation("com.slack.api:bolt-socket-mode:1.38.0")
     implementation("org.slf4j:slf4j-simple:1.7.36")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 }
 
 kotlin {
