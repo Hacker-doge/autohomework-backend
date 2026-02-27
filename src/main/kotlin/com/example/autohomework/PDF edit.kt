@@ -1,40 +1,24 @@
 package com.example.autohomework
 
 import ai.koog.agents.core.agent.AIAgentService
-import ai.koog.agents.core.tools.Tool
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.core.tools.reflect.tool
-import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.ext.tool.file.ReadFileTool
 import ai.koog.agents.ext.tool.file.WriteFileTool
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
-import ai.koog.prompt.llm.LLMCapability
-import ai.koog.prompt.markdown.markdown
 import ai.koog.rag.base.files.JVMFileSystemProvider
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.serializer
-import org.apache.pdfbox.Loader
-import org.apache.pdfbox.pdmodel.PDPageContentStream
-import org.apache.pdfbox.pdmodel.font.PDType1Font
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts
-import java.io.File
 
 class GPTCilent(tokem: String)  {
 
     val toolRegistry = ToolRegistry {
-        tools(toolsList = listOf(EditFile, ReadFile))
+        tool(ReadFileTool(JVMFileSystemProvider.ReadOnly))
+        tool(WriteFileTool(JVMFileSystemProvider.ReadWrite))
     }
 
     val agent = AIAgentService(
         promptExecutor = simpleOpenAIExecutor(tokem),
-        systemPrompt = """
-            You are a homework assistant. You have tools to work with PDF files:
-            - EditFile: Edit the text in the pdf
-            -  ReadFile: Read the pdf
-            Use these tools to complete the homework tasks in the given PDF.
-        """.trimIndent(),
-        llmModel = OpenAIModels.Chat.GPT5Mini,
+        systemPrompt = "You do the pdf that I gave you",
+        llmModel = OpenAIModels.Chat.GPT4oMini,
         toolRegistry = toolRegistry,
         maxIterations = 100
 
