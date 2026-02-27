@@ -20,19 +20,19 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import java.io.File
 
-class GPTCilent(tokem: String)  {
+class GPTCilentReview(tokem: String)  {
 
     val toolRegistry = ToolRegistry {
-        tools(toolsList = listOf(EditFile, ReadFile))
+        tools(toolsList = listOf(ReadFile))
     }
 
     val agent = AIAgentService(
         promptExecutor = simpleOpenAIExecutor(tokem),
         systemPrompt = """
-            You are a homework assistant. You have tools to work with PDF files:
-            - EditFile: Edit the text in the pdf
-            -  ReadFile: Read the pdf
-            Use these tools to complete the homework tasks in the given PDF.
+            Your a homework review assistant.. you mak sure the homework is done
+          -  ReadFile: Read the pdf
+            Use these tools to review the homework tasks in the given PDF.
+            only say the world done in all lowercases if you think the pdf is done
         """.trimIndent(),
         llmModel = OpenAIModels.Chat.GPT5Mini,
         toolRegistry = toolRegistry,
