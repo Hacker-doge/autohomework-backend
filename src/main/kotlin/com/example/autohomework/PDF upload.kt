@@ -1,5 +1,6 @@
 package com.example.autohomework
 
+import com.slack.api.model.Conversation
 import io.github.cdimascio.dotenv.dotenv
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -42,11 +43,35 @@ class PDF {
         // 2. Process with AI agent
         val gptClient = GPTCilent(openAiTokem)
         val outputFile = File(uploadDir, "processed_$filename")
+        val conversationHistory = mutableListOf<String>()
+        var n = 1
         runCatching {
-            kotlinx.coroutines.runBlocking {
-                gptClient.agent.createAgentAndRun(
-                    "Process this PDF file: ${inputFile.absolutePath}. Write the result to: ${outputFile.absolutePath}"
-                )
+            n++
+            while (true) {
+                kotlinx.coroutines.runBlocking {
+                    val result = gptClient.agent.createAgentAndRun(
+                        "Process this PDF file: ${inputFile.absolutePath}. Write the result to: ${outputFile.absolutePath} and take in mind ${conversationHistory.size}",
+                    )
+                    conversationHistory.add(result.toString())
+                    println(result.toString())
+
+                    val review = gptClient.agent.createAgentAndRun(
+                        "review ${outputFile.absolutePath} if it not done say no and give out reasoning if yes say Yes only"
+                    )
+                    val reviewText = review.toString().trim()
+                    println(reviewText)
+                    conversationHistory.add(reviewText)
+
+                    if (reviewText.equals("Yes", ignoreCase = true)) {
+                        return@runBlocking
+                    }
+                }
+
+                // Check outside runBlocking to allow clean break
+                if (conversationHistory.lastOrNull()?.equals("Yes", ignoreCase = true) == true) {
+                    break
+                }
+                else if (n == 5) {break}
             }
         }.onFailure {
             return ResponseEntity.internalServerError().body("AI processing failed: ${it.message}")
