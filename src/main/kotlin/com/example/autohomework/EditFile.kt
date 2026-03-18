@@ -11,25 +11,26 @@ object EditFile : Tool<EditFile.Args, EditFile.Result>(
     resultSerializer = serializer(),
     name = "edit_file",
     description = """
-        Appends text content to a plain text (.txt) file.
+        Appends Markdown content to a Markdown (.md) file.
         
         Use this tool when you need to:
-        - Add answers, annotations, or text to a homework TXT file
-        - Append responses to an existing text document
-        - Write content onto an existing TXT file
+        - Add answers, annotations, or Markdown-formatted text to a homework MD file
+        - Append new paragraphs, headings, lists, or code blocks to an existing Markdown file
+        - Write structured Markdown content onto an existing MD file
         
         IMPORTANT CONSTRAINTS:
-        - This APPENDS to the file — existing content is preserved
-        - The file is modified in-place; there is no undo
+        - This APPENDS to the end of the file — existing content is preserved
         - If the file does not exist, it will be created automatically
+        - The file is modified in-place; there is no undo
+        - Supports any valid Markdown syntax (headings, lists, bold, code blocks, etc.)
         
         Do NOT use this tool to read file contents — use read_file instead.
     """.trimIndent()
 ) {
     @Serializable
     data class Args(
-        val file: String,   // Absolute or relative path to the target TXT file (e.g. "homework/math.txt")
-        val edit: String    // The text string to append to the file. Newlines (\n) are supported.
+        val file: String,   // Absolute or relative path to the target MD file (e.g. "homework/math.md")
+        val edit: String    // Markdown content to append (e.g. "## Answer\n\nThe result is **42**.")
     )
 
     @Serializable
@@ -48,13 +49,13 @@ object EditFile : Tool<EditFile.Args, EditFile.Result>(
         fun textForLLM(): String = markdown {
             if (patchApplyResult is PatchApplyResult.Success) {
                 line {
-                    bold("Success:").text(" text was appended to the file. The file has been saved.")
+                    bold("Success:").text(" Markdown content was appended to the file. The file has been saved.")
                 }
                 line {
                     text("Modified file: ${(patchApplyResult as PatchApplyResult.Success).updatedContent}")
                 }
                 line {
-                    text("You may call this tool again to append additional text, or proceed to the next task.")
+                    text("You may call this tool again to append additional Markdown, or proceed to the next task.")
                 }
             } else {
                 line {
@@ -76,7 +77,11 @@ object EditFile : Tool<EditFile.Args, EditFile.Result>(
         return try {
             val file = File(args.file)
             file.parentFile?.mkdirs()
-            file.appendText(args.edit + "\n")
+
+            // Add a blank line separator if the file already has content
+            val prefix = if (file.exists() && file.length() > 0) "\n\n" else ""
+            file.appendText(prefix + args.edit)
+
             Result(Result.PatchApplyResult.Success(args.file))
         } catch (e: Exception) {
             Result(Result.PatchApplyResult.Failure(e.message ?: "Unknown error"))
