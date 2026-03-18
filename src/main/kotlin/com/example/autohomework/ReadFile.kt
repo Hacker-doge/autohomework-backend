@@ -11,15 +11,15 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
     resultSerializer = serializer(),
     name = "read_file",
     description = """
-        Reads and returns the text content from a plain text (.txt) file.
+        Reads and returns the raw Markdown content from a Markdown (.md) file.
         
         Use this tool when you need to:
-        - Read the questions or instructions in a homework TXT file
-        - Inspect the existing content of a file before editing
-        - Retrieve text from a file to understand what needs to be answered
+        - Read the questions or instructions in a homework MD file
+        - Inspect the existing Markdown content of a file before editing
+        - Retrieve the full Markdown source to understand what needs to be answered
         
         IMPORTANT CONSTRAINTS:
-        - Reads the entire file content as plain text
+        - Returns the full raw Markdown source of the file as-is
         - This tool does NOT modify the file in any way
         
         Do NOT use this tool to write content — use edit_file instead.
@@ -27,7 +27,7 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
 ) {
     @Serializable
     data class Args(
-        val file: String  // Absolute or relative path to the target TXT file (e.g. "homework/math.txt")
+        val file: String  // Absolute or relative path to the target MD file (e.g. "homework/math.md")
     )
 
     @Serializable
@@ -46,7 +46,7 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
         fun textForLLM(): String = markdown {
             if (readResult is ReadResult.Success) {
                 line {
-                    bold("Success:").text(" text was read from the file.")
+                    bold("Success:").text(" Markdown content was read from the file.")
                 }
                 line {
                     text("File content:")
@@ -55,7 +55,7 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
                     text((readResult as ReadResult.Success).content.ifBlank { "(File is empty)" })
                 }
                 line {
-                    text("You may now use edit_file to write answers, or read another file.")
+                    text("You may now use edit_file to append Markdown content, or read another file.")
                 }
             } else {
                 line {
