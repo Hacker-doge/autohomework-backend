@@ -22,7 +22,7 @@ class PDF {
     private val uploadDir = "uploads"
 
     val dotenv = dotenv()
-    private val openAiTokem = dotenv["OPENAI_TOKEM"].toString()
+    private val AiTokem = dotenv["CLAUDE_TOKEM"].toString()
     private val slackBotTokem = dotenv["SLACK_TOKEM"].toString()
     private val slackChannelId =dotenv["CHANNEL"].toString()
 
@@ -41,22 +41,23 @@ class PDF {
 
         println("pass 1")
         // 2. Process with AI agent
-        val gptClient = GPTCilent(openAiTokem)
+        val gptClient = GPTCilent(AiTokem)
         val outputFile = File(uploadDir, "processed_$filename")
         val conversationHistory = mutableListOf<String>()
         var n = 1
         runCatching {
-            n++
             while (true) {
+                n++
+                println("$n")
                 kotlinx.coroutines.runBlocking {
                     val result = gptClient.agent.createAgentAndRun(
-                        "Process this PDF file: ${inputFile.absolutePath}. Write the result to: ${outputFile.absolutePath} and take in mind ${conversationHistory.size}",
+                        "Task work: Process this PDF file: ${inputFile.absolutePath}. Write the result to: ${outputFile.absolutePath} and take in mind ${conversationHistory.size}",
                     )
                     conversationHistory.add(result.toString())
                     println(result.toString())
 
                     val review = gptClient.agent.createAgentAndRun(
-                        "review ${outputFile.absolutePath} if it not done say no and give out reasoning if yes say Yes only"
+                        "Task teach: review ${outputFile.absolutePath} if it not done say no and give out reasoning if yes say Yes only do not include student information fields (name, class, number)"
                     )
                     val reviewText = review.toString().trim()
                     println(reviewText)

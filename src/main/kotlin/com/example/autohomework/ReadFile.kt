@@ -4,7 +4,6 @@ import ai.koog.agents.core.tools.Tool
 import ai.koog.prompt.markdown.markdown
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
-import org.apache.pdfbox.Loader
 import java.io.File
 
 object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
@@ -12,16 +11,15 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
     resultSerializer = serializer(),
     name = "read_file",
     description = """
-        Reads and extracts the text content from a specific page of a PDF file.
+        Reads and returns the text content from a plain text (.txt) file.
         
         Use this tool when you need to:
-        - Read the questions or instructions on a homework PDF page
-        - Inspect the existing content of a page before editing
-        - Retrieve text from a specific page to understand what needs to be answered
+        - Read the questions or instructions in a homework TXT file
+        - Inspect the existing content of a file before editing
+        - Retrieve text from a file to understand what needs to be answered
         
         IMPORTANT CONSTRAINTS:
-        - Extraction is text-only — images, diagrams, and formatted layouts are not captured
-        - Page index is 0-based (first page = 0)
+        - Reads the entire file content as plain text
         - This tool does NOT modify the file in any way
         
         Do NOT use this tool to write content — use edit_file instead.
@@ -29,8 +27,7 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
 ) {
     @Serializable
     data class Args(
-        val file: String,  // Absolute or relative path to the target PDF file (e.g. "homework/math.pdf")
-        val page: Int      // 0-based page index to read from (0 = first page, 1 = second page, etc.)
+        val file: String  // Absolute or relative path to the target TXT file (e.g. "homework/math.txt")
     )
 
     @Serializable
@@ -49,26 +46,26 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
         fun textForLLM(): String = markdown {
             if (readResult is ReadResult.Success) {
                 line {
-                    bold("Success:").text(" text was extracted from the PDF page.")
+                    bold("Success:").text(" text was read from the file.")
                 }
                 line {
-                    text("Page content:")
+                    text("File content:")
                 }
                 line {
-                    text((readResult as ReadResult.Success).content.ifBlank { "(No extractable text found on this page)" })
+                    text((readResult as ReadResult.Success).content.ifBlank { "(File is empty)" })
                 }
                 line {
-                    text("You may now use edit_file to write answers, or read another page.")
+                    text("You may now use edit_file to write answers, or read another file.")
                 }
             } else {
                 line {
-                    bold("Failed:").text(" could not read the PDF page.")
+                    bold("Failed:").text(" could not read the file.")
                 }
                 line {
                     text("Reason: ${(readResult as ReadResult.Failure).reason}")
                 }
                 line {
-                    text("Check that the file path is correct, the file is a valid PDF, and the page index exists. Then retry.")
+                    text("Check that the file path is correct and the file exists. Then retry.")
                 }
             }
         }
@@ -78,13 +75,7 @@ object ReadFile : Tool<ReadFile.Args, ReadFile.Result>(
 
     override suspend fun execute(args: Args): Result {
         return try {
-            val content = Loader.loadPDF(File(args.file)).use { document ->
-                val stripper = org.apache.pdfbox.text.PDFTextStripper().apply {
-                    startPage = args.page + 1  // PDFTextStripper is 1-based
-                    endPage = args.page + 1
-                }
-                stripper.getText(document)
-            }
+            val content = File(args.file).readText()
             Result(Result.ReadResult.Success(content.trim()))
         } catch (e: Exception) {
             Result(Result.ReadResult.Failure(e.message ?: "Unknown error"))
