@@ -2,15 +2,15 @@
 
 grab you home work and make it into an .MD file
 
-*** step two ***
+***step two***
 
 Build a front-end and connect to port 8080(dw I use Claude)
 
-*** step three ***
+***step three***
 
 Fill in all the tokens
 
-*** step four ***
+***step four***
 Put your homework in, and in a few minutes, check Slack
 
 For more information
